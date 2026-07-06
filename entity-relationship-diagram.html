@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Core Database Entity Relationship Diagram</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1f2937;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent-color: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.15);
+            --accent-hover: #2563eb;
+            --pk-color: #eab308;
+            --fk-color: #a855f7;
+            --success-color: #10b981;
+        }
+
+        .light-mode {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --accent-color: #2563eb;
+            --accent-glow: rgba(37, 99, 235, 0.1);
+            --accent-hover: #1d4ed8;
+            --pk-color: #d97706;
+            --fk-color: #7c3aed;
+            --success-color: #059669;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            background-image: radial-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+
+        /* Glassmorphism scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* App Navbar */
+        .navbar {
+            height: 64px;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 10;
+            backdrop-filter: blur(12px);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-color), #8b5cf6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .brand-text h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .brand-text p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .badge-accent {
+            background-color: var(--accent-glow);
+            color: var(--accent-color);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .btn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--border-color);
+            border-color: var(--text-secondary);
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        /* Main Layout */
+        .app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Sidebar Component */
+        .sidebar {
+            width: 320px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: width 0.3s ease;
+            z-index: 5;
+        }
+
+        .sidebar-search {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px 10px 36px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.875rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        .sidebar-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .list-header {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            margin-left: 8px;
+        }
+
+        .entity-item {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 6px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .entity-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .entity-item.active {
+            background-color: var(--accent-glow);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .entity-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .entity-item-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .entity-item-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Center Canvas */
+        .canvas-area {
+            flex: 1;
+            background-color: var(--bg-primary);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .canvas-toolbar {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 4;
+            display: flex;
+            gap: 8px;
+            background-color: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            padding: 6px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .toolbar-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toolbar-btn:hover {
+            background-color: var(--border-color);
+            color: var(--accent-color);
+        }
+
+        .canvas-viewport {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        .canvas-viewport:active {
+            cursor: grabbing;
+        }
+
+        /* Detail Panel Component */
+        .detail-panel {
+            width: 480px;
+            background-color: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateX(100%);
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 6;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.25);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .detail-panel.open {
+            transform: translateX(0);
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .panel-title-area h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .panel-title-area p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .close-btn {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .panel-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 6px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+            text-align: center;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+            background-color: rgba(59, 130, 246, 0.02);
+        }
+
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Table details styles */
+        .column-search-wrapper {
+            margin-bottom: 12px;
+        }
+
+        .column-table-wrapper {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .column-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            text-align: left;
+        }
+
+        .column-table th {
+            background-color: var(--bg-primary);
+            padding: 10px 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .column-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .column-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .column-table tr:hover {
+            background-color: rgba(255,255,255,0.02);
+        }
+
+        .col-key {
+            width: 28px;
+        }
+
+        .key-badge {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .key-pk { background-color: var(--pk-color); }
+        .key-fk { background-color: var(--fk-color); }
+
+        .col-name {
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .col-type {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+        }
+
+        .col-req {
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .text-req { color: #f43f5e; }
+        .text-null { color: var(--text-secondary); }
+
+        .relations-section h3,
+        .code-section h3 {
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            margin-top: 16px;
+        }
+
+        .relations-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .relation-card {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .relation-card:hover {
+            border-color: var(--accent-color);
+            background-color: rgba(59, 130, 246, 0.02);
+        }
+
+        .relation-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .relation-target {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .relation-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .relation-type {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Code snippets tab */
+        .code-wrapper {
+            position: relative;
+            background-color: #05070c;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .code-header {
+            background-color: #0e121e;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-lang {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .copy-code-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-code-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .code-block {
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #e2e8f0;
+            line-height: 1.5;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        /* Interactive Mermaid custom stylesheet injections */
+        .mermaid {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Reduce diagram text sizes */
+        .mermaid svg text {
+            font-size: 11px !important;
+        }
+
+        .mermaid svg text.er.entityLabel {
+            font-size: 12px !important;
+            font-weight: 600 !important;
+        }
+
+        /* Hide relationship labels so relations are just lines */
+        .mermaid svg text.er.relationshipLabel,
+        .mermaid svg .relationshipLabel,
+        .mermaid svg .edgeLabel {
+            display: none !important;
+        }
+
+        .glowing-highlight rect {
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.8)) !important;
+            stroke: var(--accent-color) !important;
+            stroke-width: 3px !important;
+        }
+
+        .glowing-highlight text.er.entityLabel {
+            fill: #3b82f6 !important;
+            font-weight: bold !important;
+        }
+
+        /* Custom alert message */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: var(--success-color);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            z-index: 100;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <header class="navbar">
+        <div class="navbar-brand">
+            <div class="logo-icon"><i class="fa-solid fa-network-wired"></i></div>
+            <div class="brand-text">
+                <h1>Entity Relationship Diagram</h1>
+                <p>API Core Service Schema</p>
+            </div>
+        </div>
+        <div class="navbar-actions">
+            <span class="badge badge-accent"><i class="fa-solid fa-table"></i> <span id="table-count">0</span> Tables</span>
+            <span class="badge"><i class="fa-solid fa-link"></i> 10 Relationships</span>
+            
+            <button class="btn" id="theme-toggle" title="Toggle Light/Dark Theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+            <button class="btn btn-primary" id="export-svg" title="Export Diagram as SVG File">
+                <i class="fa-solid fa-download"></i> Export SVG
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="app-container">
+
+        <!-- Sidebar (List of Entities) -->
+        <aside class="sidebar">
+            <div class="sidebar-search">
+                <div class="search-wrapper">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" class="search-input" id="entity-search" placeholder="Search tables or columns...">
+                </div>
+            </div>
+            <div class="sidebar-list-container">
+                <div class="list-header">Database Tables</div>
+                <div id="entity-list-items">
+                    <!-- Dynamic List of Entities -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Canvas Viewport -->
+        <main class="canvas-area">
+            <div class="canvas-toolbar">
+                <button class="toolbar-btn" id="zoom-in" title="Zoom In"><i class="fa-solid fa-plus"></i></button>
+                <button class="toolbar-btn" id="zoom-out" title="Zoom Out"><i class="fa-solid fa-minus"></i></button>
+                <button class="toolbar-btn" id="zoom-reset" title="Reset Zoom / Center"><i class="fa-solid fa-expand"></i></button>
+                <button class="toolbar-btn" id="zoom-fit" title="Fit to Viewport"><i class="fa-solid fa-compress"></i></button>
+            </div>
+            <div class="canvas-viewport" id="diagram-container">
+                <div class="mermaid" id="mermaid-root">
+                    <!-- Mermaid.js renders SVG here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Slide-out Detail Panel -->
+        <section class="detail-panel" id="detail-panel">
+            <div class="panel-header">
+                <div class="panel-title-area">
+                    <h2 id="panel-entity-name">TableDetails</h2>
+                    <p id="panel-entity-desc">Description of table</p>
+                </div>
+                <button class="close-btn" id="panel-close" title="Close details"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <nav class="panel-tabs">
+                <button class="tab-btn active" data-tab="columns">Columns</button>
+                <button class="tab-btn" data-tab="relations">Relations</button>
+                <button class="tab-btn" data-tab="sql">SQL DDL</button>
+                <button class="tab-btn" data-tab="csharp">C# Model</button>
+            </nav>
+
+            <div class="panel-body">
+                <!-- Columns Tab -->
+                <div class="tab-content active" id="tab-columns">
+                    <div class="column-search-wrapper">
+                        <div class="search-wrapper">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" class="search-input" id="column-search" placeholder="Search columns in this table...">
+                        </div>
+                    </div>
+                    <div class="column-table-wrapper">
+                        <table class="column-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-key"></th>
+                                    <th>Column</th>
+                                    <th>Type</th>
+                                    <th>Null</th>
+                                </tr>
+                            </thead>
+                            <tbody id="column-tbody">
+                                <!-- Dynamic columns listing -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Relations Tab -->
+                <div class="tab-content" id="tab-relations">
+                    <div class="relations-section">
+                        <h3>Connected Entities</h3>
+                        <div class="relations-list" id="relations-list-items">
+                            <!-- Dynamic relationships list -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SQL DDL Tab -->
+                <div class="tab-content" id="tab-sql">
+                    <div class="code-section">
+                        <h3>Transact-SQL DDL Code</h3>
+                        <div class="code-wrapper">
+                            <div class="code-header">
+                                <span class="code-lang">sql</span>
+                                <button class="copy-code-btn" data-target="code-sql-content"><i class="fa-regular fa-copy"></i> Copy</button>
+                            </div>
+                            <pre class="code-block" id="code-sql-content"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- C# Model Tab -->
+                <div class="tab-content" id="tab-csharp">
+                    <div class="code-section">
+                        <h3>C# EF Core Entity Class</h3>
+                        <div class="code-wrapper">
+                            <div class="code-header">
+                                <span class="code-lang">csharp</span>
+                                <button class="copy-code-btn" data-target="code-cs-content"><i class="fa-regular fa-copy"></i> Copy</button>
+                            </div>
+                            <pre class="code-block" id="code-cs-content"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="copy-toast">
+        <i class="fa-solid fa-circle-check"></i> <span id="toast-message">Copied to clipboard!</span>
+    </div>
+
+    <!-- Load scripts: Mermaid and svg-pan-zoom -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+
+    <script>
+        // Main entities JSON structure
+        const entities = [
+          {
+            name: "Company",
+            description: "Root organization entity holding global identities, business hours, and operational addresses.",
+            columns: [
+              { name: "Id", type: "int", pk: true, fk: false, nullable: false, description: "Primary Key identity increment column." },
+              { name: "Code", type: "string", pk: false, fk: false, nullable: false, description: "Company identifier code (e.g. COM1)." },
+              { name: "Name", type: "string", pk: false, fk: false, nullable: false, description: "Official business name." },
+              { name: "ShortName", type: "string", pk: false, fk: false, nullable: true, description: "Abbreviated company name for display shortcuts." },
+              { name: "RegistrationNumber", type: "string", pk: false, fk: false, nullable: true, description: "Official corporate incorporation registration number." },
+              { name: "GSTNumber", type: "string", pk: false, fk: false, nullable: true, description: "Tax identification Goods & Services Tax registration number." },
+              { name: "Email", type: "string", pk: false, fk: false, nullable: true, description: "Official corporate support email." },
+              { name: "PhoneNumber", type: "string", pk: false, fk: false, nullable: true, description: "Primary contact phone number." },
+              { name: "Website", type: "string", pk: false, fk: false, nullable: true, description: "Website URL address." },
+              { name: "StreetAddress", type: "string", pk: false, fk: false, nullable: true, description: "Office headquarter street address details." },
+              { name: "City", type: "string", pk: false, fk: false, nullable: true, description: "Address city." },
+              { name: "State", type: "string", pk: false, fk: false, nullable: true, description: "Address state." },
+              { name: "PostalCode", type: "string", pk: false, fk: false, nullable: true, description: "Mailing ZIP or Postal code." },
+              { name: "Country", type: "string", pk: false, fk: false, nullable: true, description: "Address country location." },
+              { name: "Logo", type: "string", pk: false, fk: false, nullable: true, description: "File path or URL of company logo image." },
+              { name: "Prefix", type: "string", pk: false, fk: false, nullable: true, description: "Automatic naming prefix assigned for invoices/vouchers." },
+              { name: "Suffix", type: "string", pk: false, fk: false, nullable: true, description: "Automatic naming suffix assigned for billing identifiers." },
+              { name: "OpeningTime", type: "string", pk: false, fk: false, nullable: true, description: "Working hours start time." },
+              { name: "ClosingTime", type: "string", pk: false, fk: false, nullable: true, description: "Working hours closure time." },
+              { name: "Status", type: "bool", pk: false, fk: false, nullable: false, description: "Indicates active (true) or suspended/inactive (false) status." },
+              { name: "IsDeleted", type: "bool", pk: false, fk: false, nullable: false, description: "Soft deletion indicator for archiving records." },
+              { name: "CreatedBy", type: "int", pk: false, fk: false, nullable: false, description: "Audit trail user ID who created the record." },
+              { name: "CreatedDate", type: "DateTime", pk: false, fk: false, nullable: false, description: "Creation date and time." },
+              { name: "ModifiedBy", type: "int", pk: false, fk: false, nullable: false, description: "Audit trail user ID who updated the record last." },
+              { name: "ModifiedDate", type: "DateTime", pk: false, fk: false, nullable: false, description: "Latest modification date and time." }
+            ],
+            relations: [
+              { target: "Branch", type: "one-to-many", field: "CompanyId", description: "Houses multiple operating branch offices" },
+              { target: "Users", type: "one-to-many", field: "CompanyId", description: "Directly registers corporate users" }
+            ]
+          },
+          {
+            name: "Branch",
+            description: "Operating branch locations belonging to a Company. Holds contact and management metadata.",
+            columns: [
+              { name: "Id", type: "int", pk: true, fk: false, nullable: false, description: "Primary Key identity increment column." },
+              { name: "CompanyId", type: "int", pk: false, fk: true, nullable: false, description: "Foreign key referencing parent Company record." },
+              { name: "Code", type: "string", pk: false, fk: false, nullable: false, description: "Unique branch identifier code (e.g. BR01)." },
+              { name: "Name", type: "string", pk: false, fk: false, nullable: false, description: "Branch office name." },
+              { name: "ShortName", type: "string", pk: false, fk: false, nullable: true, description: "Short description name." },
+              { name: "Email", type: "string", pk: false, fk: false, nullable: true, description: "Branch contact email." },
+              { name: "PhoneNumber", type: "string", pk: false, fk: false, nullable: true, description: "Primary branch phone line." },
+              { name: "AlternatePhone", type: "string", pk: false, fk: false, nullable: true, description: "Alternate backup branch phone line." },
+              { name: "Address", type: "string", pk: false, fk: false, nullable: true, description: "Branch street address." },
+              { name: "City", type: "string", pk: false, fk: false, nullable: true, description: "Address city." },
+              { name: "Country", type: "string", pk: false, fk: false, nullable: true, description: "Address country." },
+              { name: "PinCode", type: "int", pk: false, fk: false, nullable: true, description: "ZIP or Postal code." },
+              { name: "ManagerName", type: "string", pk: false, fk: false, nullable: true, description: "Name of the branch manager." },
+              { name: "ManagerEmail", type: "string", pk: false, fk: false, nullable: true, description: "Contact email of the branch manager." },
+              { name: "ManagerPhone", type: "string", pk: false, fk: false, nullable: true, description: "Phone number of the branch manager." },
+              { name: "OpeningDate", type: "DateTime", pk: false, fk: false, nullable: false, description: "Date when the branch was launched." },
+              { name: "ClosingDate", type: "DateTime", pk: false, fk: false, nullable: true, description: "Date when branch stopped operations (if closed)." },
+              { name: "Status", type: "bool", pk: false, fk: false, nullable: false, description: "Indicates active or inactive operating status." },
+              { name: "IsDeleted", type: "bool", pk: false, fk: false, nullable: false, description: "Soft deletion indicator." },
+              { name: "CreatedBy", type: "int", pk: false, fk: false, nullable: false, description: "User ID of creator." },
+              { name: "CreatedDate", type: "DateTime", pk: false, fk: false, nullable: false, description: "Record creation timestamp." },
+              { name: "ModifiedBy", type: "int", pk: false, fk: false, nullable: false, description: "User ID of modifier." },
+              { name: "ModifiedDate", type: "DateTime", pk: false, fk: false, nullable: false, description: "Record modification timestamp." }
+            ],
+            relations: [
+              { target: "Company", type: "many-to-one", field: "CompanyId", description: "Belongs to Parent Company" },
+              { target: "UserBranch", type: "one-to-many", field: "BranchId", description: "Linked to staff/users via bridge table" },
+              { target: "Customer", type: "one-to-many", field: "BranchId", description: "Customers registered or managed in this branch location" }
+            ]
+          },
+          {
+            name: "Users",
+            description: "System user profiles, representing employees, administrators, and managers with secure credentials.",
+            columns: [
+              { name: "Id", type: "int", pk: true, fk: false, nullable: false, description: "Primary Key identity increment column." },
+              { name: "UserName", type: "string", pk: false, fk: false, nullable: false, description: "Unique portal login username." },
+              { name: "Password", type: "string", pk: false, fk: false, nullable: false, description: "Hashed secure password string." },
+              { name: "Email", type: "string", pk: false, fk: false, nullable: true, description: "Direct email address." },
+              { name: "PhoneNumber", type: "string", pk: false, fk: false, nullable: true, description: "Contact phone number." },
+              { name: "RoleId", type: "int", pk: false, fk: true, nullable: false, description: "Foreign key referencing Role table." },
+              { name: "FirstName", type: "string", pk: false, fk: false, nullable: true, description: "User's first name." },
+              { name: "LastName", type: "string", pk: false, fk: false, nullable: true, description: "User's last name." },
+              { name: "FullName", type: "string", pk: false, fk: false, nullable: true, description: "Cached full name representation (FirstName + LastName)." },
+              { name: "NickName", type: "string", pk: false, fk: false, nullable: true, description: "Display name nickname." },
+              { name: "Address", type: "string", pk: false, fk: false, nullable: true, description: "Residential street address." },
+              { name: "CompanyId", type: "int", pk: false, fk: true, nullable: false, description: "Foreign key referencing direct parent Company." },
+              { name: "Photo", type: "string", pk: false, fk: false, nullable: true, description: "Profile photo image path." },
+              { name: "Sign", type: "string", pk: false, fk: false, nullable: true, description: "Digital signature image path for signing authorizations." },
+              { name: "Status", type: "bool", pk: false, fk: false, nullable: false, description: "Indicates active or inactive status." },
+              { name: "IsDeleted", type: "bool", pk: false, fk: false, nullable: false, description: "Soft deletion indicator." },
+              { name: "LastLoginAt", type: "DateTime", pk: false, fk: false, nullable: true, description: "Last time the user logged into the system." },
+              { name: "FcmToken", type: "string", pk: false, fk: false, nullable: true, description: "Firebase Cloud Messaging token for push notifications." },
+              { name: "CreatedBy", type: "int", pk: false, fk: false, nullable: true, description: "User ID of creator." },
+              { name: "CreatedDate", type: "DateTime", pk: false, fk: false, nullable: false, description: "Creation date." },
+              { name: "ModifiedBy", type: "int", pk: false, fk: false, nullable: true, description: "User ID of last modifier." },
+              { name: "ModifiedDate", type: "DateTime", pk: false, fk: false, nullable: true, description: "Latest modification date." }
+            ],
+            relations: [
+              { target: "Role", type: "many-to-one", field: "RoleId", description: "Carries security profile settings" },
+              { target: "Company", type: "many-to-one", field: "CompanyId", description: "Direct parent company navigation link" },
+              { target: "UserBranch", type: "one-to-many", field: "UserId", description: "List of authorized branch mappings" },
+              { target: "UserLog", type: "one-to-many", field: "UserId", description: "System auditing logs generated by this user" }
+            ]
+          },
+          {
+            name: "UserBranch",
+            description: "Composite Bridge entity defining the Many-to-Many mapping between Users and Branches.",
+            columns: [
+              { name: "UserId", type: "int", pk: true, fk: true, nullable: false, description: "Part of composite PK. Foreign Key to Users." },
+              { name: "BranchId", type: "int", pk: true, fk: true, nullable: false, description: "Part of composite PK. Foreign Key to Branch." },
+              { name: "Id", type: "int", pk: false, fk: false, nullable: false, description: "Standard identity key (database config overrides as composite key on UserId + BranchId)." },
+              { name: "CreatedDate", type: "DateTime", pk: false, fk: false, nullable: false, description: "Record creation date." },
+              { name: "ModifiedDate", type: "DateTime", pk: false, fk: false, nullable: false, description: "Record modification date." },
+              { name: "CreatedBy", type: "int", pk: false, fk: false, nullable: false, description: "User ID of creator." },
+              { name: "ModifiedBy", type: "int", pk: false, fk: false, nullable: false, description: "User ID of modifier." },
+              { name: "IsDefault", type: "bool", pk: false, fk: false, nullable: false, description: "Flags this branch as the primary workspace location." }
+            ],
+            relations: [
+              { target: "Users", type: "many-to-one", field: "UserId", description: "Link to user profile" },
+              { target: "Branch", type: "many-to-one", field: "BranchId", description: "Link to branch location" }
+            ]
+          },
+          {
+            name: "Role",
+            description: "Defines security profiles, grouping authorization types (admin, manager, user).",
+            columns: [
+              { name: "Id", type: "int", pk: true, fk: false, nullable: false, description: "Primary Key identity increment column." },
+              { name: "Name", type: "string", pk: false, fk: false, nullable: false, description: "Display name of the role (e.g., Admin, Manager)." },
+              { name: "UserType", type: "UserTypes (enum)", pk: false, fk: false, nullable: false, description: "Core Enum representing user category: 0 = admin, 1 = manager, 2 = user." },
+              { name: "CodeName", type: "string", pk: false, fk: false, nullable: false, description: "System slug code name used in policies and code attributes (e.g. 'admin')." },
+              { name: "Status", type: "bool", pk: false, fk: false, nullable: false, description: "Indicates active or inactive state." }
+            ],
+            relations: [
+              { target: "Users", type: "one-to-many", field: "RoleId", description: "Users holding this security clearance role" },
+              { target: "MenuPermission", type: "one-to-many", field: "RoleId", description: "Authorized menu layouts and access permissions" }
+            ]
+          },
+          {
+            name: "Menu",
+            description: "Recursive entity mapping the application sidebar menu items and navigation routes.",
+            columns: [
+              { name: "Id", type: "int", pk: true, fk: false, nullable: false, description: "Primary Key identity increment column." },
+              { name: "Title", type: "string", pk: false, fk: false, nullable: false, description: "Menu text header displayed on frontend." },
+              { name: "Path", type: "string", pk: false, fk: false, nullable: true, description: "Frontend web router link path." },
+              { name: "Icon", type: "string", pk: false, fk: false, nullable: true, description: "CSS class for icons (e.g. 'fa fa-home')." },
+              { name: "OrderNumber", type: "int", pk: false, fk: false, nullable: false, description: "Sort index order for sidebar menus layout rendering." },
+              { name: "IsParent", type: "bool", pk: false, fk: false, nullable: false, description: "Determines if this acts as a parent folder header containing submenu items." },
+              { name: "Status", type: "bool", pk: false, fk: false, nullable: false, description: "Active or inactive state." },
+              { name: "ParentMenuId", type: "int", pk: false, fk: true, nullable: true, description: "Foreign key self-referencing to parent Menu record (recursive)." }
+            ],
+            relations: [
+              { target: "Menu", type: "many-to-one", field: "ParentMenuId", description: "Parent menu item (Self-Reference)" },
+              { target: "Menu", type: "one-to-many", field: "Id", description: "Sub-menus under this menu group (Self-Reference)" },
+              { target: "MenuPermission", type: "one-to-many", field: "MenuId", description: "Security constraints for role access" }
+            ]
+          },
+          {
+            name: "MenuPermission",
+            description: "Junction table mapping Roles to Menus and defining direct CRUD and dashboard permissions.",
+            columns: [
+              { name: "Id", type: "int", pk: true, fk: false, nullable: false, description: "Primary Key identity increment column." },
+              { name: "MenuId", type: "int", pk: false, fk: true, nullable: false, description: "Foreign key referencing direct Menu item." },
+              { name: "RoleId", type: "int", pk: false, fk: true, nullable: false, description: "Foreign key referencing direct Role profile." },
+              { name: "CanView", type: "bool", pk: false, fk: false, nullable: false, description: "Permission flag showing if the role can view/read this menu page." },
+              { name: "CanAdd", type: "bool", pk: false, fk: false, nullable: false, description: "Permission flag showing if the role can create records." },
+              { name: "CanEdit", type: "bool", pk: false, fk: false, nullable: false, description: "Permission flag showing if the role can modify records." },
+              { name: "CanDelete", type: "bool", pk: false, fk: false, nullable: false, description: "Permission flag showing if the role can delete records." },
+              { name: "ShowInHome", type: "bool", pk: false, fk: false, nullable: false, description: "Flags if the link should appear as a quick shortcut card on home landing page." }
+            ],
+            relations: [
+              { target: "Menu", type: "many-to-one", field: "MenuId", description: "Navigated page menu target" },
+              { target: "Role", type: "many-to-one", field: "RoleId", description: "Assigned security role context" }
+            ]
+          },
+          {
+            name: "UserLog",
+            description: "Auditing log table recording login timestamps, activities, alerts, and system level logs.",
+            columns: [
+              { name: "LogId", type: "int", pk: true, fk: false, nullable: false, description: "Primary Key identity increment column." },
+              { name: "UserId", type: "int", pk: false, fk: true, nullable: false, description: "Foreign Key referencing the User that executed the action." },
+              { name: "LogLevel", type: "string", pk: false, fk: false, nullable: true, description: "Log severity level (Info, Warning, Error, Critical)." },
+              { name: "LogMessage", type: "string", pk: false, fk: false, nullable: true, description: "Detailed log description text." },
+              { name: "Timestamp", type: "DateTime", pk: false, fk: false, nullable: false, description: "Timestamp of log occurrence (defaults to server date)." }
+            ],
+            relations: [
+              { target: "Users", type: "many-to-one", field: "UserId", description: "Direct author user who created the event" }
+            ]
+          },
+          {
+            name: "Customer",
+            description: "Client/customer data associated with operating branches. Holds demographic and security portal credentials.",
+            columns: [
+              { name: "Id", type: "int", pk: true, fk: false, nullable: false, description: "Primary Key identity increment column." },
+              { name: "Code", type: "string", pk: false, fk: false, nullable: false, description: "Unique customer customer code sequence." },
+              { name: "Number", type: "int", pk: false, fk: false, nullable: false, description: "Sequential integer customer indexing." },
+              { name: "Name", type: "string", pk: false, fk: false, nullable: false, description: "Customer full name." },
+              { name: "Address1", type: "string", pk: false, fk: false, nullable: false, description: "Primary residential/office street address." },
+              { name: "Address2", type: "string", pk: false, fk: false, nullable: false, description: "Secondary address line." },
+              { name: "City", type: "string", pk: false, fk: false, nullable: false, description: "Address city." },
+              { name: "District", type: "int", pk: false, fk: false, nullable: false, description: "District ID code." },
+              { name: "DistrictName", type: "string", pk: false, fk: false, nullable: false, description: "District display name." },
+              { name: "State", type: "int", pk: false, fk: false, nullable: false, description: "State ID code." },
+              { name: "StateName", type: "string", pk: false, fk: false, nullable: false, description: "State display name." },
+              { name: "Pincode", type: "int", pk: false, fk: false, nullable: false, description: "Mailing ZIP or PIN code." },
+              { name: "LandMark", type: "string", pk: false, fk: false, nullable: false, description: "Landmark description for shipping." },
+              { name: "Phone", type: "string", pk: false, fk: false, nullable: false, description: "Primary contact phone number." },
+              { name: "Phone2", type: "string", pk: false, fk: false, nullable: false, description: "Secondary backup phone number." },
+              { name: "Email", type: "string", pk: false, fk: false, nullable: false, description: "Customer email contact." },
+              { name: "GstNumber", type: "string", pk: false, fk: false, nullable: false, description: "GST tax registration number." },
+              { name: "Image", type: "string", pk: false, fk: false, nullable: true, description: "Profile photo url or file path." },
+              { name: "UserName", type: "string", pk: false, fk: false, nullable: false, description: "Customer portal login username." },
+              { name: "Password", type: "string", pk: false, fk: false, nullable: false, description: "Secure portal hashed password." },
+              { name: "IsAuth2", type: "bool", pk: false, fk: false, nullable: false, description: "Double authentication validation flag." },
+              { name: "BranchId", type: "int", pk: false, fk: true, nullable: false, description: "Foreign key referencing the managing Branch." },
+              { name: "FcmToken", type: "string", pk: false, fk: false, nullable: false, description: "Notification token." }
+            ],
+            relations: [
+              { target: "Branch", type: "many-to-one", field: "BranchId", description: "Direct managing Branch location" }
+            ]
+          }
+        ];
+
+        // Mermaid.js code structure
+        const mermaidSource = `
+        erDiagram
+            Company ||--o{ Branch : ""
+            Company ||--o{ Users : ""
+            Role ||--o{ Users : ""
+            Users ||--o{ UserBranch : ""
+            Branch ||--o{ UserBranch : ""
+            Users ||--o{ UserLog : ""
+            Branch ||--o{ Customer : ""
+            Role ||--o{ MenuPermission : ""
+            Menu ||--o{ MenuPermission : ""
+            Menu ||--o{ Menu : ""
+        `;
+
+        // App state
+        let selectedEntityName = null;
+        let panZoomInstance = null;
+        let activeHighlight = null;
+
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            securityLevel: 'loose',
+            er: {
+                useMaxWidth: false,
+                layoutDirection: 'LR'
+            }
+        });
+
+        // Document Ready Entrypoint
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('table-count').textContent = entities.length;
+            renderEntityList(entities);
+            renderDiagram();
+            setupEventListeners();
+        });
+
+        // Render Sidebar List
+        function renderEntityList(list) {
+            const container = document.getElementById('entity-list-items');
+            container.innerHTML = '';
+            
+            if(list.length === 0) {
+                container.innerHTML = '<div class="entity-item-desc" style="padding: 12px; text-align: center;">No tables found</div>';
+                return;
+            }
+
+            list.forEach(entity => {
+                const item = document.createElement('div');
+                item.className = `entity-item ${entity.name === selectedEntityName ? 'active' : ''}`;
+                item.id = `sidebar-entity-${entity.name}`;
+                item.innerHTML = `
+                    <div class="entity-item-header">
+                        <span class="entity-item-name">${entity.name}</span>
+                        <span class="badge" style="font-size: 0.65rem;">${entity.columns.length} cols</span>
+                    </div>
+                    <span class="entity-item-desc">${entity.description}</span>
+                `;
+                item.addEventListener('click', () => {
+                    selectEntity(entity.name);
+                });
+                container.appendChild(item);
+            });
+        }
+
+        // Render Mermaid Diagram and bind svg-pan-zoom
+        function renderDiagram() {
+            const root = document.getElementById('mermaid-root');
+            root.innerHTML = `<div class="mermaid-rendering" style="color: var(--text-secondary);"><i class="fa-solid fa-spinner fa-spin"></i> Rendering Diagram...</div>`;
+
+            mermaid.render('rendered-svg-diagram', mermaidSource).then(({ svg }) => {
+                root.innerHTML = svg;
+                const svgElement = root.querySelector('svg');
+                svgElement.setAttribute('id', 'erd-svg-element');
+                svgElement.style.width = '100%';
+                svgElement.style.height = '100%';
+                
+                // Initialize Pan/Zoom
+                panZoomInstance = svgPanZoom(svgElement, {
+                    zoomEnabled: true,
+                    controlIconsEnabled: false,
+                    fit: true,
+                    center: true,
+                    minZoom: 0.2,
+                    maxZoom: 10,
+                    zoomScaleSensitivity: 0.2
+                });
+
+                // Apply initial zoom reset/fit
+                setTimeout(() => {
+                    panZoomInstance.resize();
+                    panZoomInstance.fit();
+                    panZoomInstance.center();
+                }, 50);
+
+                // Bind SVG node click interactions
+                bindSvgInteractions(svgElement);
+            }).catch(err => {
+                console.error(err);
+                root.innerHTML = `<div class="error-msg" style="color: #f43f5e; padding: 20px;"><i class="fa-solid fa-triangle-exclamation"></i> Error rendering Mermaid.js graph.</div>`;
+            });
+        }
+
+        // Detect click on SVG Nodes
+        function bindSvgInteractions(svgElement) {
+            // Find text tags matching entity headers
+            const texts = svgElement.querySelectorAll('text');
+            texts.forEach(textNode => {
+                const textContent = textNode.textContent.trim();
+                const matchedEntity = entities.find(e => e.name.toLowerCase() === textContent.toLowerCase());
+                
+                if (matchedEntity) {
+                    // This text block is our entity header. Let's find its container <g> node
+                    let parentGroup = textNode.parentNode;
+                    while (parentGroup && parentGroup.tagName !== 'g' && parentGroup !== svgElement) {
+                        parentGroup = parentGroup.parentNode;
+                    }
+
+                    if (parentGroup) {
+                        parentGroup.style.cursor = 'pointer';
+                        // Bind click to the entity header/box group
+                        parentGroup.addEventListener('click', (event) => {
+                            event.stopPropagation();
+                            selectEntity(matchedEntity.name);
+                        });
+
+                        // Map the reference to easily highlight later
+                        matchedEntity.svgGroup = parentGroup;
+                    }
+                }
+            });
+        }
+
+        // Highlight entity node in Mermaid diagram
+        function highlightSvgNode(entityName) {
+            // Reset previous highlight stroke
+            if (activeHighlight) {
+                activeHighlight.classList.remove('glowing-highlight');
+                const prevRects = activeHighlight.querySelectorAll('rect');
+                prevRects.forEach(r => {
+                    r.style.stroke = '';
+                    r.style.strokeWidth = '';
+                });
+            }
+
+            const entity = entities.find(e => e.name === entityName);
+            if (entity && entity.svgGroup) {
+                entity.svgGroup.classList.add('glowing-highlight');
+                const rects = entity.svgGroup.querySelectorAll('rect');
+                rects.forEach(r => {
+                    r.style.stroke = 'var(--accent-color)';
+                    r.style.strokeWidth = '3px';
+                });
+                activeHighlight = entity.svgGroup;
+
+                // Smoothly pan & zoom to the highlighted element
+                if (panZoomInstance) {
+                    const sizes = panZoomInstance.getSizes();
+                    const bounding = entity.svgGroup.getBoundingClientRect();
+                    const containerBounding = document.getElementById('diagram-container').getBoundingClientRect();
+                    
+                    // Simple center calculation relative to the viewport sizes
+                    const groupX = bounding.left - containerBounding.left + (bounding.width / 2);
+                    const groupY = bounding.top - containerBounding.top + (bounding.height / 2);
+                    
+                    const centerPointX = containerBounding.width / 2;
+                    const centerPointY = containerBounding.height / 2;
+
+                    const deltaX = centerPointX - groupX;
+                    const deltaY = centerPointY - groupY;
+                    
+                    panZoomInstance.panBy({x: deltaX, y: deltaY});
+                }
+            }
+        }
+
+        // Central Entity Selection Handler
+        function selectEntity(entityName) {
+            selectedEntityName = entityName;
+            
+            // Highlight sidebar item
+            document.querySelectorAll('.entity-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const sidebarItem = document.getElementById(`sidebar-entity-${entityName}`);
+            if (sidebarItem) {
+                sidebarItem.classList.add('active');
+                sidebarItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            // Highlight in diagram SVG
+            highlightSvgNode(entityName);
+
+            // Populate side panel details
+            const entity = entities.find(e => e.name === entityName);
+            if (entity) {
+                document.getElementById('panel-entity-name').textContent = entity.name;
+                document.getElementById('panel-entity-desc').textContent = entity.description;
+
+                // Load Columns
+                renderColumnsList(entity.columns);
+                
+                // Load Relations
+                renderRelationsList(entity.relations);
+
+                // Autogenerate SQL Code
+                document.getElementById('code-sql-content').textContent = generateDDL(entity);
+
+                // Autogenerate C# Code
+                document.getElementById('code-cs-content').textContent = generateCSharpClass(entity);
+
+                // Show Details Panel
+                document.getElementById('detail-panel').classList.add('open');
+            }
+        }
+
+        // Render columns dynamic list
+        function renderColumnsList(columns, filter = '') {
+            const tbody = document.getElementById('column-tbody');
+            tbody.innerHTML = '';
+
+            const filtered = columns.filter(col => 
+                col.name.toLowerCase().includes(filter.toLowerCase()) || 
+                col.type.toLowerCase().includes(filter.toLowerCase()) ||
+                col.description.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 12px;">No matching columns</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(col => {
+                const tr = document.createElement('tr');
+                let keyBadge = '';
+                if(col.pk && col.fk) {
+                    keyBadge = `<div class="key-badge key-pk" title="Primary Key / Foreign Key" style="background: linear-gradient(135deg, var(--pk-color), var(--fk-color))">PK</div>`;
+                } else if(col.pk) {
+                    keyBadge = `<div class="key-badge key-pk" title="Primary Key (PK)">PK</div>`;
+                } else if(col.fk) {
+                    keyBadge = `<div class="key-badge key-fk" title="Foreign Key (FK)">FK</div>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="col-key">${keyBadge}</td>
+                    <td>
+                        <div class="col-name" title="${col.description}">${col.name}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 2px;">${col.description}</div>
+                    </td>
+                    <td class="col-type">${col.type}</td>
+                    <td class="col-req ${col.nullable ? 'text-null' : 'text-req'}">${col.nullable ? 'YES' : 'NO'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Render connected relations list in panel
+        function renderRelationsList(relations) {
+            const container = document.getElementById('relations-list-items');
+            container.innerHTML = '';
+
+            if (relations.length === 0) {
+                container.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-secondary);">No active relationships.</div>';
+                return;
+            }
+
+            relations.forEach(rel => {
+                const card = document.createElement('div');
+                card.className = 'relation-card';
+                card.innerHTML = `
+                    <div class="relation-info">
+                        <span class="relation-target"><i class="fa-solid fa-table"></i> ${rel.target}</span>
+                        <span class="relation-desc">${rel.description} (${rel.field})</span>
+                    </div>
+                    <span class="relation-type">${rel.type}</span>
+                `;
+                card.addEventListener('click', () => {
+                    selectEntity(rel.target);
+                });
+                container.appendChild(card);
+            });
+        }
+
+        // Autogenerate SQL DDL
+        function generateDDL(entity) {
+            let ddl = `CREATE TABLE [dbo].[${entity.name}] (\n`;
+            let colLines = [];
+            
+            entity.columns.forEach(col => {
+                let typeStr = "";
+                if (col.type === "int") {
+                    typeStr = "INT";
+                } else if (col.type === "string") {
+                    typeStr = "NVARCHAR(255)";
+                } else if (col.type === "DateTime") {
+                    typeStr = "DATETIME2";
+                } else if (col.type === "bool") {
+                    typeStr = "BIT";
+                } else {
+                    typeStr = col.type.toUpperCase();
+                }
+                
+                let constraints = [];
+                if (col.pk && entity.name !== "UserBranch") { 
+                    constraints.push("IDENTITY(1,1)");
+                }
+                if (!col.nullable) {
+                    constraints.push("NOT NULL");
+                } else {
+                    constraints.push("NULL");
+                }
+                
+                colLines.push(`    [${col.name}] ${typeStr} ${constraints.join(' ')}`);
+            });
+
+            // Primary Key constraint
+            if (entity.name === "UserBranch") {
+                colLines.push(`    CONSTRAINT [PK_UserBranch] PRIMARY KEY CLUSTERED ([UserId] ASC, [BranchId] ASC)`);
+            } else {
+                // Find primary key
+                const pkCol = entity.columns.find(c => c.pk);
+                if (pkCol) {
+                    colLines.push(`    CONSTRAINT [PK_${entity.name}] PRIMARY KEY CLUSTERED ([${pkCol.name}] ASC)`);
+                }
+            }
+            
+            // Add Foreign Keys constraints
+            entity.columns.forEach(col => {
+                if (col.fk) {
+                    let refTable = "";
+                    if (col.name === "CompanyId") refTable = "Company";
+                    else if (col.name === "BranchId") refTable = "Branch";
+                    else if (col.name === "UserId") refTable = "Users";
+                    else if (col.name === "RoleId") refTable = "Role";
+                    else if (col.name === "ParentMenuId") refTable = "Menu";
+                    else if (col.name === "MenuId") refTable = "Menu";
+                    
+                    if (refTable) {
+                        colLines.push(`    CONSTRAINT [FK_${entity.name}_${refTable}_${col.name}] FOREIGN KEY ([${col.name}]) REFERENCES [dbo].[${refTable}] ([Id])`);
+                    }
+                }
+            });
+            
+            ddl += colLines.join(",\n");
+            ddl += `\n);`;
+            return ddl;
+        }
+
+        // Autogenerate C# Model Code
+        function generateCSharpClass(entity) {
+            let code = `using System;\nusing System.Collections.Generic;\nusing System.ComponentModel.DataAnnotations;\nusing System.ComponentModel.DataAnnotations.Schema;\n\nnamespace Models\n{\n`;
+            code += `    public class ${entity.name}\n    {\n`;
+            
+            // Columns
+            entity.columns.forEach(col => {
+                if (col.pk) {
+                    code += `        [Key]\n`;
+                }
+                if (col.fk) {
+                    // FK attribute if naming is customized
+                }
+                if (!col.nullable && col.type === "string") {
+                    code += `        [Required]\n`;
+                }
+                
+                let csharpType = col.type;
+                if (col.type === "DateTime") csharpType = "DateTime";
+                if (col.type === "bool") csharpType = "bool";
+                
+                let defaultVal = "";
+                if (col.type === "string") {
+                    if (col.nullable) {
+                        csharpType = "string?";
+                    } else {
+                        csharpType = "string";
+                        defaultVal = " = null!;";
+                    }
+                } else if (col.nullable) {
+                    csharpType += "?";
+                }
+                
+                code += `        public ${csharpType} ${col.name} { get; set; }${defaultVal}\n\n`;
+            });
+            
+            // Navigation Relations properties
+            entity.relations.forEach(rel => {
+                if (rel.type === "many-to-one") {
+                    let navType = rel.target === "Users" ? "Users" : rel.target;
+                    code += `        [ForeignKey(nameof(${rel.field}))]\n`;
+                    code += `        public ${navType}? ${rel.target} { get; set; }\n\n`;
+                } else if (rel.type === "one-to-many") {
+                    let collType = rel.target;
+                    if (rel.target === "Menu" && entity.name === "Menu") {
+                        code += `        public List<Menu>? ChildMenus { get; set; }\n\n`;
+                    } else if (rel.target === "UserBranch") {
+                        code += `        public ICollection<UserBranch> UserBranches { get; set; } = new List<UserBranch>();\n\n`;
+                    } else {
+                        code += `        public ICollection<${collType}> ${collType} { get; set; } = new List<${collType}>();\n\n`;
+                    }
+                }
+            });
+            
+            code += `    }\n}`;
+            return code;
+        }
+
+        // Setup DOM Event Listeners
+        function setupEventListeners() {
+            // Theme Toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            themeToggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                document.body.classList.toggle('light-mode');
+                const isDark = document.documentElement.classList.contains('dark');
+                themeToggle.innerHTML = isDark ? `<i class="fa-solid fa-moon"></i>` : `<i class="fa-solid fa-sun"></i>`;
+                
+                // Re-initialize mermaid theme
+                mermaid.initialize({
+                    theme: isDark ? 'dark' : 'default'
+                });
+                renderDiagram();
+            });
+
+            // Zoom Toolbar
+            document.getElementById('zoom-in').addEventListener('click', () => {
+                if(panZoomInstance) panZoomInstance.zoomIn();
+            });
+            document.getElementById('zoom-out').addEventListener('click', () => {
+                if(panZoomInstance) panZoomInstance.zoomOut();
+            });
+            document.getElementById('zoom-reset').addEventListener('click', () => {
+                if(panZoomInstance) {
+                    panZoomInstance.resetZoom();
+                    panZoomInstance.center();
+                }
+            });
+            document.getElementById('zoom-fit').addEventListener('click', () => {
+                if(panZoomInstance) {
+                    panZoomInstance.fit();
+                    panZoomInstance.center();
+                }
+            });
+
+            // Search Bar Filter tables
+            document.getElementById('entity-search').addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const filtered = entities.filter(entity => {
+                    const inName = entity.name.toLowerCase().includes(query);
+                    const inCols = entity.columns.some(col => col.name.toLowerCase().includes(query));
+                    return inName || inCols;
+                });
+                renderEntityList(filtered);
+            });
+
+            // Column Search Filter in Detail Panel
+            document.getElementById('column-search').addEventListener('input', (e) => {
+                const query = e.target.value;
+                const entity = entities.find(e => e.name === selectedEntityName);
+                if (entity) {
+                    renderColumnsList(entity.columns, query);
+                }
+            });
+
+            // Detail Panel Tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Update active tab buttons
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    // Update active content
+                    const tabId = btn.getAttribute('data-tab');
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    document.getElementById(`tab-${tabId}`).classList.add('active');
+                });
+            });
+
+            // Close Detail Panel
+            document.getElementById('panel-close').addEventListener('click', () => {
+                document.getElementById('detail-panel').classList.remove('open');
+                
+                // Clear SVG Highlights
+                if (activeHighlight) {
+                    activeHighlight.classList.remove('glowing-highlight');
+                    const rects = activeHighlight.querySelectorAll('rect');
+                    rects.forEach(r => {
+                        r.style.stroke = '';
+                        r.style.strokeWidth = '';
+                    });
+                    activeHighlight = null;
+                }
+                selectedEntityName = null;
+                document.querySelectorAll('.entity-item').forEach(item => item.classList.remove('active'));
+            });
+
+            // Copy to Clipboard buttons
+            document.querySelectorAll('.copy-code-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-target');
+                    const code = document.getElementById(targetId).textContent;
+                    
+                    navigator.clipboard.writeText(code).then(() => {
+                        showToast("Copied to clipboard!");
+                    }).catch(err => {
+                        console.error('Failed to copy: ', err);
+                    });
+                });
+            });
+
+            // Export to SVG file
+            document.getElementById('export-svg').addEventListener('click', () => {
+                const svgEl = document.getElementById('erd-svg-element');
+                if(!svgEl) return;
+                
+                try {
+                    // Clone SVG to modify it back to standard view (removing pan-zoom transform attributes if needed)
+                    // We can serialise the svgEl inner contents
+                    const serializer = new XMLSerializer();
+                    let source = serializer.serializeToString(svgEl);
+                    
+                    // Add namespaces if missing
+                    if(!source.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)){
+                        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+                    }
+                    if(!source.match(/^<svg[^>]+xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/)){
+                        source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+                    }
+
+                    // Add xml declaration
+                    source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+
+                    // Convert to blob and download
+                    const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = url;
+                    downloadLink.download = "api-core-erd.svg";
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    showToast("Diagram downloaded as SVG!");
+                } catch(e) {
+                    console.error("Export SVG error", e);
+                    showToast("Failed to download SVG");
+                }
+            });
+        }
+
+        // Show toast feedback notification
+        function showToast(message) {
+            const toast = document.getElementById('copy-toast');
+            document.getElementById('toast-message').textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
