@@ -67,6 +67,13 @@ namespace Auth.Controllers
                 {
                     var branchId = _db.UserBranch.GetFirstOrDefault(x => x.UserId == user.Id && x.IsDefault)?.BranchId;
                     var token = _jWTManager.Authenticate(user.Role?.CodeName, user.Id, user.Role?.Id, branchId, user?.CompanyId);
+                    
+                    // Save refresh token to user in database
+                    user.RefreshToken = token.RefreshToken;
+                    user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+                    _db.User.Update(user);
+                    _db.Save();
+
                     token.User = user;
 
                     var company = _db.Company.GetFirstOrDefault(a => a.Id > 0);
@@ -137,6 +144,13 @@ namespace Auth.Controllers
                 }
 
                 var token = _jWTManager.Authenticate(user.Role?.CodeName, user.Id, user.Role?.Id, request.BranchId, user?.CompanyId);
+                
+                // Save refresh token to user in database
+                user.RefreshToken = token.RefreshToken;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+                _db.User.Update(user);
+                _db.Save();
+
                 token.User = user;
 
                 var company = _db.Company.GetFirstOrDefault(a => a.Id > 0);
@@ -149,6 +163,89 @@ namespace Auth.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"An error occurred: {ex.Message}");
+                result.status = false;
+                result.message = ex.Message;
+            }
+
+            return Ok(result);
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        [Route("refresh")]
+        public IActionResult Refresh(TokenApiModel tokenApiModel)
+        {
+            Response result = new Response(true);
+            try
+            {
+                if (tokenApiModel == null || string.IsNullOrEmpty(tokenApiModel.AccessToken) || string.IsNullOrEmpty(tokenApiModel.RefreshToken))
+                {
+                    result.status = false;
+                    result.message = "Invalid client request";
+                    return BadRequest(result);
+                }
+
+                string accessToken = tokenApiModel.AccessToken;
+                string refreshToken = tokenApiModel.RefreshToken;
+
+                var principal = _jWTManager.GetPrincipalFromExpiredToken(accessToken);
+                if (principal == null)
+                {
+                    result.status = false;
+                    result.message = "Invalid access token";
+                    return BadRequest(result);
+                }
+
+                var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdClaim, out int userId))
+                {
+                    result.status = false;
+                    result.message = "Invalid token claims";
+                    return BadRequest(result);
+                }
+
+                var user = _db.User.GetFirstOrDefault(u => u.Id == userId, "Role");
+                if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+                {
+                    result.status = false;
+                    result.message = "Invalid refresh token or token expired";
+                    return BadRequest(result);
+                }
+
+                if (user.Status == false)
+                {
+                    result.status = false;
+                    result.message = "User is not active/approved";
+                    return BadRequest(result);
+                }
+
+                var branchId = _db.UserBranch.GetFirstOrDefault(x => x.UserId == user.Id && x.IsDefault)?.BranchId;
+                var branchIdClaim = principal.FindFirst("BranchId")?.Value;
+                if (int.TryParse(branchIdClaim, out int tokenBranchId) && tokenBranchId > 0)
+                {
+                    branchId = tokenBranchId;
+                }
+
+                var newTokens = _jWTManager.Authenticate(user.Role?.CodeName, user.Id, user.Role?.Id, branchId, user?.CompanyId);
+
+                // Update refresh token in DB
+                user.RefreshToken = newTokens.RefreshToken;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+                _db.User.Update(user);
+                _db.Save();
+
+                newTokens.User = user;
+                var company = _db.Company.GetFirstOrDefault(a => a.Id > 0);
+                if (company != null)
+                {
+                    newTokens.Logo = company.Logo;
+                }
+
+                result.data = newTokens;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred in refresh token: {ex.Message}");
                 result.status = false;
                 result.message = ex.Message;
             }

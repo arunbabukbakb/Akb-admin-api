@@ -70,6 +70,8 @@ namespace Models
 
         public DateTime? LastLoginAt { get; set; }
         public string? FcmToken { get; set; }
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
 
         /* ===== AUDIT FIELDS ===== */
         public int? CreatedBy { get; set; }
