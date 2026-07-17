@@ -2,7 +2,9 @@
 using Models;
 using Models.ViewModels;
 using Data.Repository.IRepository;
+using Data;
 using Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -21,14 +23,16 @@ namespace Auth.Controllers
         private readonly IAuthRepository authrepo;
         private readonly ILogger<HomeController> _logger;
         private readonly ISettingsRepository _setting;
+        private readonly ApplicationDbContext _context;
 
-        public HomeController(IJWTManagerRepository jWTManager, IAuthRepository authrepo, IUnitOfWork db, ILogger<HomeController> logger, ISettingsRepository setting)
+        public HomeController(IJWTManagerRepository jWTManager, IAuthRepository authrepo, IUnitOfWork db, ILogger<HomeController> logger, ISettingsRepository setting, ApplicationDbContext context)
         {
             this._jWTManager = jWTManager;
             this.authrepo = authrepo;
             _db = db;
             _logger = logger;
             _setting = setting;
+            _context = context;
         }
 
         [AllowAnonymous]
@@ -246,6 +250,38 @@ namespace Auth.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"An error occurred in refresh token: {ex.Message}");
+                result.status = false;
+                result.message = ex.Message;
+            }
+
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpPost]
+        [Route("reset-database")]
+        public IActionResult ResetDatabase()
+        {
+            Response result = new Response(true);
+            try
+            {
+                // Set command timeout to 60 seconds for migrations/seeding
+                _context.Database.SetCommandTimeout(60);
+
+                // Delete the database schema
+                _context.Database.EnsureDeleted();
+
+                // Re-run migrations and seeds
+                _context.Database.Migrate();
+
+                // Run DbInitializer checks
+                DbInitializer.Initialize(_context);
+
+                result.message = "Database reset to defaults successfully.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred during database reset: {ex.Message}");
                 result.status = false;
                 result.message = ex.Message;
             }
