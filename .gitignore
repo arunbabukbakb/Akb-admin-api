@@ -180,3 +180,4 @@ GeneratedFiles/
 
 packages/
 !packages/build/
+adminapi/wwwroot/files/notification.json
