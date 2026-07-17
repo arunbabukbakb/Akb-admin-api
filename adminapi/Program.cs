@@ -2,6 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Serilog;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using System.IO;
+
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Data;
@@ -12,6 +16,8 @@ using Infrastructure;
 using Models.DtoMapper;
 using Microsoft.Extensions.DependencyInjection;
 using AutoMapper;
+using adminapi.Middleware;
+
 
 internal class Program
 {
@@ -72,7 +78,8 @@ internal class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddSingleton(new MobileService("Your Twilio Account SID", "Your Twilio Auth Token", "Your Twilio Phone Number"));
         builder.Services.AddSingleton(new MailService("Your SendGrid API Key"));
-        builder.Services.AddSingleton<INotificationService, NotificationService>();
+        builder.Services.AddScoped<INotificationService, NotificationService>();
+
         //Auto Mapper  
         builder.Services.AddAutoMapper(typeof(AutoMappingProfile).Assembly);
 
@@ -111,15 +118,35 @@ internal class Program
         }
             });
         });
-        //builder.Services.AddSignalR();
-        //var path = Path.Combine(builder.Environment.WebRootPath, "files", "notification.json");
-        //FirebaseApp.Create(new AppOptions()
-        //{
-        //	Credential = GoogleCredential.FromFile(Path.Combine(builder.Environment.WebRootPath, "files", "notification.json")),
-        //});
+        // Initialize Firebase safely
+        try
+        {
+            var webRoot = builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+            var notificationJsonPath = Path.Combine(webRoot, "files", "notification.json");
+            if (File.Exists(notificationJsonPath))
+            {
+                FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile(notificationJsonPath),
+                });
+                Log.Information("FirebaseApp initialized successfully using notification.json.");
+            }
+            else
+            {
+                Log.Warning("Firebase credential file not found at: {Path}. Push notifications will fail if invoked.", notificationJsonPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to initialize FirebaseApp.");
+        }
+
 
 
         var app = builder.Build();
+
+        app.UseMiddleware<ExceptionMiddleware>();
+
 
 
         app.UseCors("akbpolicy");
